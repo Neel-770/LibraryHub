@@ -12,7 +12,8 @@ const STORAGE_KEYS = {
   RESOURCES: "lh_resources",
   BOOKINGS: "lh_bookings",
   CURRENT_USER: "lh_currentUser",
-  SETTINGS: "lh_settings"
+  SETTINGS: "lh_settings",
+  THEME: "lh_theme"
 };
 
 /**
@@ -207,6 +208,35 @@ export function updateSettings(updates) {
   const updated = { ...current, ...updates };
   safeSetItem(STORAGE_KEYS.SETTINGS, updated);
   return updated;
+}
+
+export function getSavedTheme() {
+  try {
+    const directTheme = localStorage.getItem(STORAGE_KEYS.THEME);
+    if (directTheme === "dark" || directTheme === "light") {
+      return directTheme;
+    }
+  } catch (e) {}
+
+  const settings = getSettings();
+  if (settings && (settings.theme === "dark" || settings.theme === "light")) {
+    return settings.theme;
+  }
+
+  if (typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+    return "dark";
+  }
+
+  return "light";
+}
+
+export function saveTheme(theme) {
+  const normalized = theme === "dark" ? "dark" : "light";
+  try {
+    localStorage.setItem(STORAGE_KEYS.THEME, normalized);
+  } catch (e) {}
+  updateSettings({ theme: normalized });
+  return normalized;
 }
 
 // ----------------------------------------------------

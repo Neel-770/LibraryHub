@@ -21,7 +21,8 @@ export const DEMO_USER = {
     notificationsEnabled: true,
     autoCheckinReminders: true,
     compactView: false,
-    defaultBookingType: "librarySeat"
+    defaultBookingType: "librarySeat",
+    theme: "light"
   }
 };
 

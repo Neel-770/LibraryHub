@@ -18,6 +18,8 @@ import {
   updateCurrentUser,
   getSettings,
   updateSettings,
+  getSavedTheme,
+  saveTheme,
   resetDemoData,
   clearAllBookings,
   exportDataAsJSON,
@@ -58,18 +60,21 @@ document.addEventListener("DOMContentLoaded", () => {
   initStorage();
   AppState.currentUser = getCurrentUser();
 
-  // 2. Setup DOM event listeners
+  // 2. Setup theme toggle (Dark / Light mode)
+  setupThemeToggle();
+
+  // 3. Setup DOM event listeners
   setupNavigation();
   setupMobileDrawer();
   setupNotificationBell();
 
-  // 3. Handle initial route
+  // 4. Handle initial route
   handleInitialRoute();
 
-  // 4. Update user chip in header and sidebar
+  // 5. Update user chip in header and sidebar
   updateUserUI();
 
-  // 5. Update header date/time
+  // 6. Update header date/time
   updateHeaderDateTime();
 });
 
@@ -354,6 +359,73 @@ function updateUserUI() {
   userNameEls.forEach(el => el.textContent = user.name);
   userRoleEls.forEach(el => el.textContent = user.role || "Student");
   userAvatarEls.forEach(el => el.textContent = user.avatarText || "AR");
+}
+
+// ============================================================================
+// THEME MANAGEMENT (DARK / LIGHT MODE)
+// ============================================================================
+
+export function getActiveTheme() {
+  return document.documentElement.getAttribute("data-theme") || getSavedTheme();
+}
+
+export function setTheme(theme, triggerToast = true) {
+  const normalized = theme === "dark" ? "dark" : "light";
+  document.documentElement.setAttribute("data-theme", normalized);
+  saveTheme(normalized);
+
+  // Update Topbar button accessibility attributes & states
+  const toggleBtn = document.getElementById("theme-toggle-btn");
+  if (toggleBtn) {
+    const isDark = normalized === "dark";
+    toggleBtn.setAttribute("aria-label", isDark ? "Switch to light mode" : "Switch to dark mode");
+    toggleBtn.setAttribute("title", isDark ? "Switch to light mode" : "Switch to dark mode");
+    toggleBtn.setAttribute("aria-pressed", isDark ? "true" : "false");
+  }
+
+  // Update Settings checkbox if present in DOM
+  const prefThemeInput = document.getElementById("pref-theme");
+  if (prefThemeInput) {
+    prefThemeInput.checked = (normalized === "dark");
+  }
+
+  if (triggerToast) {
+    showToast(`Switched to ${normalized} mode.`, "info", 2000);
+  }
+
+  return normalized;
+}
+
+export function toggleTheme() {
+  const current = getActiveTheme();
+  const next = current === "dark" ? "light" : "dark";
+  return setTheme(next, true);
+}
+
+function setupThemeToggle() {
+  // Apply initial theme immediately
+  const initialTheme = getSavedTheme();
+  setTheme(initialTheme, false);
+
+  // Attach Topbar toggle button listener
+  const toggleBtn = document.getElementById("theme-toggle-btn");
+  if (toggleBtn) {
+    toggleBtn.addEventListener("click", () => {
+      toggleTheme();
+    });
+  }
+
+  // Listen for OS scheme change if user hasn't explicitly set localStorage
+  if (typeof window !== "undefined" && window.matchMedia) {
+    try {
+      window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
+        const explicit = localStorage.getItem("lh_theme");
+        if (!explicit) {
+          setTheme(e.matches ? "dark" : "light", false);
+        }
+      });
+    } catch (e) {}
+  }
 }
 
 // ============================================================================
@@ -835,10 +907,21 @@ function renderProfileSettingsView(container) {
 
       <!-- Right: Settings & Data Management -->
       <div class="settings-column">
-        <!-- Booking Preferences -->
+        <!-- Booking & Interface Preferences -->
         <div class="settings-card">
-          <h3 class="settings-card-title">Booking Preferences</h3>
+          <h3 class="settings-card-title">Preferences & Appearance</h3>
           
+          <div class="settings-row">
+            <div>
+              <div class="setting-name">Dark Mode</div>
+              <div class="setting-desc">Switch between light and dark visual themes across the application.</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="pref-theme" ${getActiveTheme() === "dark" ? "checked" : ""}>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
           <div class="settings-row">
             <div>
               <div class="setting-name">Email Reservation Receipts</div>
@@ -901,9 +984,16 @@ function renderProfileSettingsView(container) {
   `;
 
   // Attach preference handlers
+  const prefTheme = container.querySelector("#pref-theme");
   const prefNotif = container.querySelector("#pref-notifications");
   const prefRemind = container.querySelector("#pref-reminders");
   const prefDur = container.querySelector("#pref-duration");
+
+  if (prefTheme) {
+    prefTheme.addEventListener("change", () => {
+      setTheme(prefTheme.checked ? "dark" : "light", true);
+    });
+  }
 
   const savePreferences = () => {
     updateSettings({

@@ -1,0 +1,300 @@
+/* ==========================================================================
+   LibraryHub - Responsive Stylesheet (responsive.css)
+   Mobile navigation drawer, adaptive layouts, and touch optimization
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Large Desktop Adjustments (<= 1200px)
+   -------------------------------------------------------------------------- */
+@media (max-width: 1200px) {
+  .dashboard-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .facilities-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .facility-layout-grid,
+  .seat-view-grid {
+    grid-template-columns: 1fr 300px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   2. Tablet Breakpoint (<= 1024px)
+   -------------------------------------------------------------------------- */
+@media (max-width: 1024px) {
+  /* Layout shifts: Sidebar becomes off-canvas drawer */
+  .app-sidebar {
+    transform: translateX(-100%);
+    box-shadow: 0 0 25px rgba(0, 0, 0, 0.4);
+    z-index: 250;
+  }
+
+  .app-sidebar.drawer-open {
+    transform: translateX(0);
+  }
+
+  .sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(3px);
+    z-index: 240;
+    display: none;
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+  }
+
+  .sidebar-overlay.active {
+    display: block;
+    opacity: 1;
+  }
+
+  .app-main {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .mobile-toggle-btn {
+    display: inline-flex;
+  }
+
+  /* Grids */
+  .facility-layout-grid,
+  .seat-view-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .booking-summary-panel,
+  .seat-summary-sidebar {
+    order: 2;
+  }
+
+  .profile-layout-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   3. Mobile Landscape & Phablets (<= 768px)
+   -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  .app-topbar {
+    padding: 0 var(--space-4);
+  }
+
+  .breadcrumbs {
+    display: none;
+  }
+
+  .page-title {
+    font-size: var(--font-size-lg);
+  }
+
+  .topbar-date-pill {
+    display: none;
+  }
+
+  .main-content-scroll {
+    padding: var(--space-4);
+  }
+
+  .welcome-hero {
+    flex-direction: column;
+    padding: var(--space-5);
+    align-items: flex-start;
+  }
+
+  .welcome-title {
+    font-size: var(--font-size-2xl);
+  }
+
+  .welcome-hero-card {
+    width: 100%;
+  }
+
+  .dashboard-stats-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+  }
+
+  .facilities-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rooms-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pc-workstations-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .study-places-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Seat map horizontal scrolling on mobile */
+  .seat-map-wrapper {
+    padding: var(--space-4);
+    overflow-x: auto;
+  }
+
+  .floor-plan-container {
+    min-width: 520px;
+  }
+
+  .seats-row-grid {
+    gap: var(--space-2);
+  }
+
+  .seat-element {
+    min-height: 80px;
+    padding: var(--space-2);
+  }
+
+  .seat-element .seat-status-caption {
+    display: none; /* Hide verbose text on tiny viewports */
+  }
+
+  .bookings-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .toolbar-select-group {
+    width: 100%;
+  }
+
+  .bookings-grid-list {
+    grid-template-columns: 1fr;
+  }
+
+  .booking-control-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+  }
+
+  .control-group.flex-grow {
+    width: 100%;
+  }
+
+  .slot-pills-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-2);
+  }
+
+  .slot-pill-btn {
+    width: 100%;
+  }
+
+  .counter-input-group {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .counter-btn {
+    flex: 1;
+  }
+
+  .counter-input {
+    flex: 2;
+  }
+
+  /* Modals on mobile */
+  .modal-dialog {
+    max-width: 95vw;
+    margin: var(--space-2);
+  }
+
+  .modal-body {
+    padding: var(--space-4);
+  }
+
+  .confirm-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .receipt-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Toast position on mobile */
+  .toast-container {
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+  }
+
+  .toast-item {
+    min-width: auto;
+    width: 100%;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   4. Extra Small Screens (<= 480px)
+   -------------------------------------------------------------------------- */
+@media (max-width: 480px) {
+  .welcome-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .welcome-actions .btn {
+    width: 100%;
+  }
+
+  .slot-pills-row {
+    grid-template-columns: 1fr;
+  }
+
+  .lab-selector-tabs {
+    flex-direction: column;
+    border-bottom: none;
+  }
+
+  .lab-tab-btn {
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+  }
+
+  .lab-tab-btn.active {
+    border-bottom: 1px solid var(--color-primary-blue);
+    background-color: var(--color-primary-blue-light);
+  }
+
+  .booking-status-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .booking-status-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .item-meta-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   5. Accessibility: Reduced Motion
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,34 +1,16 @@
 /* ==========================================================================
    LibraryHub - Responsive Stylesheet (responsive.css)
-   Mobile navigation drawer, adaptive layouts, and touch optimization
+   Off-canvas navigation drawer, adaptive grid columns, touch ergonomics
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
-   1. Large Desktop Adjustments (<= 1200px)
-   -------------------------------------------------------------------------- */
-@media (max-width: 1200px) {
-  .dashboard-stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .facilities-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .facility-layout-grid,
-  .seat-view-grid {
-    grid-template-columns: 1fr 300px;
-  }
-}
-
-/* --------------------------------------------------------------------------
-   2. Tablet Breakpoint (<= 1024px)
+   1. Tablet & Mobile Drawer Breakpoint (<= 1024px)
    -------------------------------------------------------------------------- */
 @media (max-width: 1024px) {
   /* Layout shifts: Sidebar becomes off-canvas drawer */
   .app-sidebar {
     transform: translateX(-100%);
-    box-shadow: 0 0 25px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 0 24px rgba(0, 0, 0, 0.25);
     z-index: 250;
   }
 
@@ -42,12 +24,12 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(15, 23, 42, 0.6);
-    backdrop-filter: blur(3px);
+    background-color: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(2px);
     z-index: 240;
     display: none;
     opacity: 0;
-    transition: opacity var(--transition-normal);
+    transition: opacity var(--transition);
   }
 
   .sidebar-overlay.active {
@@ -64,7 +46,12 @@
     display: inline-flex;
   }
 
-  /* Grids */
+  /* Dashboard facilities: 2 columns */
+  .facilities-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Booking views: 1 column stack (summary below) */
   .facility-layout-grid,
   .seat-view-grid {
     grid-template-columns: 1fr;
@@ -72,7 +59,7 @@
 
   .booking-summary-panel,
   .seat-summary-sidebar {
-    order: 2;
+    position: static;
   }
 
   .profile-layout-grid {
@@ -81,7 +68,7 @@
 }
 
 /* --------------------------------------------------------------------------
-   3. Mobile Landscape & Phablets (<= 768px)
+   2. Small Tablets & Phones (<= 768px)
    -------------------------------------------------------------------------- */
 @media (max-width: 768px) {
   .app-topbar {
@@ -92,10 +79,6 @@
     display: none;
   }
 
-  .page-title {
-    font-size: var(--font-size-lg);
-  }
-
   .topbar-date-pill {
     display: none;
   }
@@ -104,23 +87,18 @@
     padding: var(--space-4);
   }
 
-  .welcome-hero {
+  .dashboard-welcome {
     flex-direction: column;
-    padding: var(--space-5);
     align-items: flex-start;
+    padding: var(--space-4);
   }
 
-  .welcome-title {
-    font-size: var(--font-size-2xl);
-  }
-
-  .welcome-hero-card {
+  .dashboard-welcome .welcome-action {
     width: 100%;
   }
 
-  .dashboard-stats-grid {
-    grid-template-columns: 1fr;
-    gap: var(--space-3);
+  .dashboard-welcome .btn-primary {
+    width: 100%;
   }
 
   .facilities-grid {
@@ -136,30 +114,16 @@
   }
 
   .study-places-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
   }
 
-  /* Seat map horizontal scrolling on mobile */
-  .seat-map-wrapper {
-    padding: var(--space-4);
-    overflow-x: auto;
+  .booking-control-bar {
+    flex-direction: column;
+    align-items: stretch;
   }
 
-  .floor-plan-container {
-    min-width: 520px;
-  }
-
-  .seats-row-grid {
-    gap: var(--space-2);
-  }
-
-  .seat-element {
-    min-height: 80px;
-    padding: var(--space-2);
-  }
-
-  .seat-element .seat-status-caption {
-    display: none; /* Hide verbose text on tiny viewports */
+  .lab-selector-tabs {
+    flex-direction: column;
   }
 
   .bookings-toolbar {
@@ -167,66 +131,20 @@
     align-items: stretch;
   }
 
-  .toolbar-select-group {
-    width: 100%;
+  .bookings-table-wrapper {
+    overflow-x: auto;
   }
 
-  .bookings-grid-list {
-    grid-template-columns: 1fr;
+  /* Seat map touch scroll */
+  .seat-map-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
-  .booking-control-bar {
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--space-3);
+  .floor-plan-container {
+    min-width: 320px;
   }
 
-  .control-group.flex-grow {
-    width: 100%;
-  }
-
-  .slot-pills-row {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-2);
-  }
-
-  .slot-pill-btn {
-    width: 100%;
-  }
-
-  .counter-input-group {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .counter-btn {
-    flex: 1;
-  }
-
-  .counter-input {
-    flex: 2;
-  }
-
-  /* Modals on mobile */
-  .modal-dialog {
-    max-width: 95vw;
-    margin: var(--space-2);
-  }
-
-  .modal-body {
-    padding: var(--space-4);
-  }
-
-  .confirm-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .receipt-grid {
-    grid-template-columns: 1fr;
-  }
-
-  /* Toast position on mobile */
   .toast-container {
     left: 16px;
     right: 16px;
@@ -235,60 +153,36 @@
 
   .toast-item {
     min-width: auto;
-    width: 100%;
+    max-width: 100%;
   }
 }
 
 /* --------------------------------------------------------------------------
-   4. Extra Small Screens (<= 480px)
+   3. Mobile Small (<= 480px)
    -------------------------------------------------------------------------- */
 @media (max-width: 480px) {
-  .welcome-actions {
+  .study-places-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .booking-card-main {
     flex-direction: column;
-    width: 100%;
-  }
-
-  .welcome-actions .btn {
-    width: 100%;
-  }
-
-  .slot-pills-row {
-    grid-template-columns: 1fr;
-  }
-
-  .lab-selector-tabs {
-    flex-direction: column;
-    border-bottom: none;
-  }
-
-  .lab-tab-btn {
-    border-radius: var(--radius-md);
-    border: 1px solid var(--color-border);
-  }
-
-  .lab-tab-btn.active {
-    border-bottom: 1px solid var(--color-primary-blue);
-    background-color: var(--color-primary-blue-light);
+    align-items: flex-start;
+    gap: var(--space-2);
   }
 
   .booking-status-tabs {
-    flex-wrap: nowrap;
     overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
+    padding-bottom: 4px;
   }
 
-  .booking-status-tabs::-webkit-scrollbar {
-    display: none;
-  }
-
-  .item-meta-grid {
-    grid-template-columns: 1fr;
+  .booking-status-tabs .status-tab {
+    white-space: nowrap;
   }
 }
 
 /* --------------------------------------------------------------------------
-   5. Accessibility: Reduced Motion
+   4. Reduced Motion
    -------------------------------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

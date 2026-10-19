@@ -83,13 +83,13 @@ document.addEventListener("DOMContentLoaded", () => {
 // ============================================================================
 
 const VIEW_TITLES = {
-  dashboard: { title: "Library Overview", breadcrumb: "Dashboard" },
-  "computer-labs": { title: "Computer Labs", breadcrumb: "Facilities / Computer Labs" },
-  "discussion-rooms": { title: "Discussion Rooms", breadcrumb: "Facilities / Discussion Rooms" },
-  "study-room": { title: "Honors Study Room", breadcrumb: "Facilities / Study Room" },
-  "library-seats": { title: "Library Reading Seats", breadcrumb: "Facilities / Reading Seats" },
-  "my-bookings": { title: "My Reservations", breadcrumb: "Student Services / My Bookings" },
-  "profile-settings": { title: "Profile & Demo Settings", breadcrumb: "Account / Settings" }
+  dashboard: { title: "Dashboard", breadcrumb: "Overview" },
+  "computer-labs": { title: "Computer Labs", breadcrumb: "Facilities" },
+  "discussion-rooms": { title: "Discussion Rooms", breadcrumb: "Facilities" },
+  "study-room": { title: "Study Room", breadcrumb: "Facilities" },
+  "library-seats": { title: "Library Seats", breadcrumb: "Facilities" },
+  "my-bookings": { title: "My Bookings", breadcrumb: "Bookings" },
+  "profile-settings": { title: "Settings", breadcrumb: "Account" }
 };
 
 export function navigateTo(viewId) {
@@ -604,56 +604,39 @@ export function openBookingConfirmModal(bookingRequest, onSuccessCallback) {
 
 export function openBookingReceiptModal(booking) {
   const modalHtml = `
-    <div class="modal-dialog modal-receipt">
+    <div class="modal-dialog">
       <div class="modal-content">
-        <div class="receipt-success-banner">
-          <div class="receipt-success-icon">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        <div class="modal-header">
+          <div>
+            <span class="modal-kicker" style="color: var(--color-available);">Success</span>
+            <h3 class="modal-title">Reservation Confirmed</h3>
           </div>
-          <h3 class="receipt-success-title">Reservation Confirmed!</h3>
-          <p class="receipt-success-sub">Your space has been secured in the LibraryHub system.</p>
+          <button class="modal-close-btn" data-modal-close aria-label="Close dialog">&times;</button>
         </div>
 
         <div class="modal-body">
-          <div class="receipt-pass-card">
-            <div class="receipt-pass-header">
-              <span class="receipt-brand">LibraryHub Campus Pass</span>
-              <span class="receipt-id">${escapeHtml(booking.id)}</span>
-            </div>
-
-            <div class="receipt-pass-body">
-              <div class="receipt-resource-title">${escapeHtml(booking.resourceName)}</div>
-              <div class="receipt-location">${escapeHtml(booking.location)}</div>
-
-              <div class="receipt-grid">
-                <div class="receipt-grid-item">
-                  <span class="label">DATE</span>
-                  <span class="val">${formatDisplayDate(booking.date)}</span>
-                </div>
-                <div class="receipt-grid-item">
-                  <span class="label">TIME INTERVAL</span>
-                  <span class="val">${formatDisplayTime(booking.startTime)} - ${formatDisplayTime(booking.endTime)}</span>
-                </div>
-                <div class="receipt-grid-item">
-                  <span class="label">STUDENT</span>
-                  <span class="val">${escapeHtml(booking.userName)}</span>
-                </div>
-                <div class="receipt-grid-item">
-                  <span class="label">STATUS</span>
-                  <span class="val text-success font-semibold">Active Confirmed</span>
-                </div>
-              </div>
-
-              <!-- Barcode Mockup for realism -->
-              <div class="receipt-barcode-wrapper">
-                <div class="barcode-stripes">||| | | |||| | ||| || |||| | | ||||| || | |||</div>
-                <div class="barcode-number">${escapeHtml(booking.id)}</div>
-              </div>
-            </div>
+          <div>
+            <h4 style="font-size: var(--font-size-base); font-weight: 600;">${escapeHtml(booking.resourceName)}</h4>
+            <p style="font-size: var(--font-size-xs); color: var(--color-text-secondary);">${escapeHtml(booking.location)}</p>
           </div>
 
-          <div class="receipt-instructions">
-            <p><strong>Check-in reminder:</strong> Arrive within 15 minutes of scheduled start time. Your reservation is stored in your account history.</p>
+          <div class="confirm-grid">
+            <div class="confirm-cell">
+              <span class="cell-label">Booking ID</span>
+              <span class="cell-value" style="font-family: monospace;">#${escapeHtml(booking.id)}</span>
+            </div>
+            <div class="confirm-cell">
+              <span class="cell-label">Date</span>
+              <span class="cell-value">${formatDisplayDate(booking.date)}</span>
+            </div>
+            <div class="confirm-cell">
+              <span class="cell-label">Time</span>
+              <span class="cell-value">${formatDisplayTime(booking.startTime)} - ${formatDisplayTime(booking.endTime)}</span>
+            </div>
+            <div class="confirm-cell">
+              <span class="cell-label">Status</span>
+              <span class="cell-value" style="color: var(--color-available);">Confirmed</span>
+            </div>
           </div>
         </div>
 
@@ -854,20 +837,8 @@ function renderProfileSettingsView(container) {
 
   container.innerHTML = `
     <div class="view-header">
-      <div>
-        <h1 class="view-title">Profile & Demo Settings</h1>
-        <p class="view-subtitle">Manage student account details, booking preferences, and application demo data.</p>
-      </div>
-    </div>
-
-    <!-- Demo Disclaimer Banner -->
-    <div class="demo-notice-banner">
-      <div class="banner-icon">
-        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-      </div>
-      <div>
-        <strong>Demonstration Profile Notice:</strong> This profile is populated with mock university data stored in your browser's <code>localStorage</code>. No real personal information, passwords, or institutional authentication systems are involved.
-      </div>
+      <h1 class="view-title">Settings & Profile</h1>
+      <p class="view-subtitle">Manage student profile details, preferences, and demonstration data.</p>
     </div>
 
     <div class="profile-layout-grid">

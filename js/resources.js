@@ -1,11 +1,13 @@
 /**
- * resources.js - Facility Views: Computer Labs, Discussion Rooms & Study Room
+ * resources.js - Clean, Unified Facility Views
  * 
- * Manages view rendering, filtering, time slot selection, availability calculations,
- * and booking workflows for:
- * 1. Computer Labs (Individual workstations PC-A-01..PC-C-12)
- * 2. Discussion Rooms (Entire collaboration suites DR-101..DR-301)
- * 3. Study Room (Individual quiet pods ST-01..ST-20)
+ * Implements the standard 6-step pattern:
+ * 1. Small title & one-line description
+ * 2. Date and time selection
+ * 3. Resource selection
+ * 4. Clear availability display
+ * 5. Compact booking summary
+ * 6. Prominent confirmation button
  */
 
 import { COMPUTER_LABS, TIME_SLOTS } from "./data.js";
@@ -17,12 +19,9 @@ import {
 } from "./storage.js";
 import {
   isResourceAvailable,
-  formatDisplayTime,
-  formatDisplayDate,
-  formatDuration
+  formatDisplayDate
 } from "./booking.js";
 
-// Helper for escaping strings safely
 function escapeHtml(str) {
   if (typeof str !== "string") return "";
   return str.replace(/[&<>"']/g, match => ({
@@ -45,7 +44,7 @@ function getTodayString() {
 export function renderComputerLabsView(container, onRequestBookingCallback) {
   let selectedLabId = COMPUTER_LABS[0].id;
   let selectedDate = getTodayString();
-  let selectedSlotId = TIME_SLOTS[1].id; // Default to 10:00 - 12:00
+  let selectedSlotId = TIME_SLOTS[1].id;
   let selectedComputerId = null;
 
   function updateView() {
@@ -54,7 +53,6 @@ export function renderComputerLabsView(container, onRequestBookingCallback) {
     const computersInLab = getResourcesByParent(selectedLabId);
     const bookings = getBookings();
 
-    // Calculate availability stats for this lab and slot
     let availableCount = 0;
     const computersWithStatus = computersInLab.map(pc => {
       const isAvail = isResourceAvailable(pc.id, selectedDate, activeSlot.startTime, activeSlot.endTime, bookings);
@@ -70,10 +68,8 @@ export function renderComputerLabsView(container, onRequestBookingCallback) {
 
     container.innerHTML = `
       <div class="view-header">
-        <div>
-          <h1 class="view-title">Computer Lab Workstations</h1>
-          <p class="view-subtitle">Reserve an individual computer for programming, media editing, or AI research.</p>
-        </div>
+        <h1 class="view-title">Computer Labs</h1>
+        <p class="view-subtitle">Select a lab and workstation to reserve your computer session.</p>
       </div>
 
       <!-- Lab Selector Tabs -->
@@ -86,54 +82,34 @@ export function renderComputerLabsView(container, onRequestBookingCallback) {
         `).join("")}
       </div>
 
-      <!-- Controls & Filter Bar -->
+      <!-- Date & Time Selection -->
       <div class="booking-control-bar">
         <div class="control-group">
-          <label for="lab-date-picker" class="control-label">Reservation Date</label>
+          <label for="lab-date-picker" class="control-label">Date</label>
           <input type="date" id="lab-date-picker" class="form-input" min="${getTodayString()}" value="${selectedDate}">
         </div>
 
         <div class="control-group flex-grow">
-          <label for="lab-slot-picker" class="control-label">Time Slot (${TIME_SLOTS.length} Slots)</label>
+          <label class="control-label">Time Slot</label>
           <div class="slot-pills-row" id="lab-slot-pills">
             ${TIME_SLOTS.map(slot => `
               <button class="slot-pill-btn ${slot.id === selectedSlotId ? "active" : ""}" data-slot-id="${slot.id}" type="button">
-                <span class="slot-time">${slot.startTime} - ${slot.endTime}</span>
-                <span class="slot-period">${slot.period}</span>
+                ${slot.startTime} - ${slot.endTime}
               </button>
             `).join("")}
           </div>
         </div>
       </div>
 
-      <!-- Active Lab Details Banner -->
-      <div class="facility-info-banner">
-        <div class="banner-icon">
-          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-        </div>
-        <div class="banner-body">
-          <div class="banner-title-row">
-            <h2 class="banner-title">${escapeHtml(currentLab.name)}</h2>
-            <span class="status-pill ${availableCount > 0 ? "pill-avail" : "pill-full"}">
-              ${availableCount} of ${computersInLab.length} Computers Available
-            </span>
-          </div>
-          <p class="banner-desc">${escapeHtml(currentLab.description)} • <strong>Hardware:</strong> ${escapeHtml(currentLab.specs)}</p>
-          <div class="software-tags-row">
-            ${currentLab.primarySoftware.map(s => `<span class="software-tag">${escapeHtml(s)}</span>`).join("")}
-          </div>
-        </div>
-      </div>
-
-      <!-- Computer Selection Layout -->
+      <!-- Main Layout: Grid + Summary -->
       <div class="facility-layout-grid">
-        <!-- Left: Computers Grid -->
+        <!-- Resource Selection Grid -->
         <div class="computers-grid-container">
           <div class="section-title-row">
-            <h3 class="subsection-title">Select Workstation in ${escapeHtml(currentLab.shortName)}</h3>
+            <h2 class="subsection-title">${escapeHtml(currentLab.name)} (${availableCount} of ${computersInLab.length} available)</h2>
             <div class="legend-row">
               <span class="legend-badge"><span class="legend-dot dot-avail"></span> Available</span>
-              <span class="legend-badge"><span class="legend-dot dot-occupied"></span> Occupied</span>
+              <span class="legend-badge"><span class="legend-dot dot-occupied"></span> Reserved</span>
               <span class="legend-badge"><span class="legend-dot dot-selected"></span> Selected</span>
             </div>
           </div>
@@ -144,7 +120,7 @@ export function renderComputerLabsView(container, onRequestBookingCallback) {
               let labelText = "Available";
               if (!pc.isAvailable) {
                 stateClass = "pc-occupied";
-                labelText = "Reserved for Slot";
+                labelText = "Reserved";
               }
               if (pc.isSelected) {
                 stateClass = "pc-selected";
@@ -163,13 +139,6 @@ export function renderComputerLabsView(container, onRequestBookingCallback) {
                     <span class="pc-id-label">${pc.id.replace("PC-", "")}</span>
                     <span class="pc-status-dot"></span>
                   </div>
-                  <div class="pc-card-icon">
-                    <svg class="icon-monitor" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <rect x="2" y="3" width="20" height="14" rx="2"/>
-                      <line x1="8" y1="21" x2="16" y2="21"/>
-                      <line x1="12" y1="17" x2="12" y2="21"/>
-                    </svg>
-                  </div>
                   <div class="pc-card-name">${escapeHtml(pc.name)}</div>
                   <div class="pc-card-status">${labelText}</div>
                 </button>
@@ -178,39 +147,29 @@ export function renderComputerLabsView(container, onRequestBookingCallback) {
           </div>
         </div>
 
-        <!-- Right: Booking Summary Sidebar -->
+        <!-- Compact Booking Summary Panel -->
         <div class="booking-summary-panel">
-          <h3 class="summary-title">Workstation Reservation</h3>
+          <h2 class="summary-title">Booking Summary</h2>
           
           ${selectedComputer ? `
             <div class="summary-card">
-              <div class="summary-badge-row">
-                <span class="summary-chip-lab">${escapeHtml(currentLab.shortName)}</span>
-                <span class="summary-chip-id">${escapeHtml(selectedComputer.id)}</span>
+              <div>
+                <h3 class="summary-item-name">${escapeHtml(selectedComputer.name)}</h3>
+                <p class="summary-item-loc">${escapeHtml(currentLab.shortName)} • ${escapeHtml(selectedComputer.location)}</p>
               </div>
-              <h4 class="summary-item-name">${escapeHtml(selectedComputer.name)}</h4>
-              <p class="summary-item-loc">${escapeHtml(selectedComputer.location)}</p>
 
               <div class="summary-details-list">
                 <div class="detail-row">
-                  <span class="detail-label">Date:</span>
+                  <span class="detail-label">Date</span>
                   <span class="detail-val">${formatDisplayDate(selectedDate)}</span>
                 </div>
                 <div class="detail-row">
-                  <span class="detail-label">Time Slot:</span>
-                  <span class="detail-val">${activeSlot.startTime} - ${activeSlot.endTime} (${formatDuration(activeSlot.startTime, activeSlot.endTime)})</span>
+                  <span class="detail-label">Time</span>
+                  <span class="detail-val">${activeSlot.startTime} - ${activeSlot.endTime}</span>
                 </div>
                 <div class="detail-row">
-                  <span class="detail-label">Specification:</span>
-                  <span class="detail-val text-sm">${escapeHtml(selectedComputer.specs)}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="detail-label">Features:</span>
-                  <span class="detail-val text-sm">${selectedComputer.features.join(", ")}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="detail-label">Cost:</span>
-                  <span class="detail-val text-success">Free (College Amenity)</span>
+                  <span class="detail-label">Workstation</span>
+                  <span class="detail-val">${escapeHtml(selectedComputer.id)}</span>
                 </div>
               </div>
 
@@ -218,53 +177,33 @@ export function renderComputerLabsView(container, onRequestBookingCallback) {
                 <button class="btn btn-primary btn-block" id="btn-confirm-pc-booking">
                   Confirm Reservation
                 </button>
-                <button class="btn btn-outline btn-block" id="btn-clear-pc-selection">
-                  Deselect Workstation
+                <button class="btn btn-secondary-sm btn-block" id="btn-clear-pc-selection">
+                  Deselect
                 </button>
               </div>
             </div>
           ` : `
             <div class="summary-empty-state">
-              <div class="empty-icon-circle">
-                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-              </div>
-              <h4>No Workstation Selected</h4>
-              <p>Click on any available green workstation in the grid to review specifications and finalize your booking.</p>
+              <p>Select an available workstation to review details and confirm.</p>
             </div>
           `}
-
-          <!-- Quick Lab Guidelines -->
-          <div class="guidelines-box">
-            <h5 class="guidelines-title">
-              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-              Computer Lab Guidelines
-            </h5>
-            <ul class="guidelines-list">
-              <li>Individual reservations are for 1 student only.</li>
-              <li>Save all work to cloud or personal storage; systems reset nightly.</li>
-              <li>15-minute grace period before unclaimed reservations release.</li>
-            </ul>
-          </div>
         </div>
       </div>
     `;
 
-    // Attach event listeners
-    // 1. Lab selector tabs
+    // Event listeners
     container.querySelectorAll(".lab-tab-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         selectedLabId = btn.getAttribute("data-lab-id");
-        selectedComputerId = null; // reset selection on lab change
+        selectedComputerId = null;
         updateView();
       });
     });
 
-    // 2. Date input
     const dateInput = container.querySelector("#lab-date-picker");
     if (dateInput) {
       dateInput.addEventListener("change", (e) => {
         selectedDate = e.target.value;
-        // Verify if selected PC is still available
         if (selectedComputerId && !isResourceAvailable(selectedComputerId, selectedDate, activeSlot.startTime, activeSlot.endTime)) {
           selectedComputerId = null;
         }
@@ -272,7 +211,6 @@ export function renderComputerLabsView(container, onRequestBookingCallback) {
       });
     }
 
-    // 3. Slot pills
     container.querySelectorAll("#lab-slot-pills .slot-pill-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         selectedSlotId = btn.getAttribute("data-slot-id");
@@ -284,7 +222,6 @@ export function renderComputerLabsView(container, onRequestBookingCallback) {
       });
     });
 
-    // 4. PC card clicks
     container.querySelectorAll(".pc-card:not([disabled])").forEach(btn => {
       btn.addEventListener("click", () => {
         const pcId = btn.getAttribute("data-pc-id");
@@ -293,7 +230,6 @@ export function renderComputerLabsView(container, onRequestBookingCallback) {
       });
     });
 
-    // 5. Booking action
     const btnConfirm = container.querySelector("#btn-confirm-pc-booking");
     if (btnConfirm && selectedComputer) {
       btnConfirm.addEventListener("click", () => {
@@ -329,184 +265,206 @@ export function renderComputerLabsView(container, onRequestBookingCallback) {
 
 export function renderDiscussionRoomsView(container, onRequestBookingCallback) {
   let selectedDate = getTodayString();
-  let selectedSlotId = TIME_SLOTS[1].id; // Default 10:00 - 12:00
+  let selectedSlotId = TIME_SLOTS[1].id;
   let participantsCount = 4;
-  let customStartTime = null;
-  let customEndTime = null;
-  let isCustomTime = false;
+  let selectedRoomId = null;
 
   function updateView() {
     const activeSlot = TIME_SLOTS.find(s => s.id === selectedSlotId) || TIME_SLOTS[0];
-    const startTime = isCustomTime ? customStartTime : activeSlot.startTime;
-    const endTime = isCustomTime ? customEndTime : activeSlot.endTime;
-
     const rooms = getResourcesByType("discussionRoom");
     const bookings = getBookings();
 
     const roomsWithStatus = rooms.map(room => {
-      const isAvail = isResourceAvailable(room.id, selectedDate, startTime, endTime, bookings);
+      const isAvail = isResourceAvailable(room.id, selectedDate, activeSlot.startTime, activeSlot.endTime, bookings);
       const isCapacitySufficient = participantsCount <= room.capacity;
       return {
         ...room,
         isAvailable: isAvail,
-        isCapacitySufficient
+        isCapacitySufficient,
+        isSelected: room.id === selectedRoomId
       };
     });
 
     const availableCount = roomsWithStatus.filter(r => r.isAvailable && r.isCapacitySufficient).length;
+    const selectedRoom = selectedRoomId ? getResourceById(selectedRoomId) : null;
 
     container.innerHTML = `
       <div class="view-header">
-        <div>
-          <h1 class="view-title">Discussion & Collaboration Rooms</h1>
-          <p class="view-subtitle">Reserve entire private rooms for project teams, presentations, and group study sessions.</p>
-        </div>
+        <h1 class="view-title">Discussion Rooms</h1>
+        <p class="view-subtitle">Reserve an entire collaboration room for your study group.</p>
       </div>
 
-      <!-- Controls Filter Bar -->
+      <!-- Date, Time & Participant Controls -->
       <div class="booking-control-bar">
         <div class="control-group">
-          <label for="room-date-picker" class="control-label">Reservation Date</label>
+          <label for="room-date-picker" class="control-label">Date</label>
           <input type="date" id="room-date-picker" class="form-input" min="${getTodayString()}" value="${selectedDate}">
         </div>
 
-        <div class="control-group">
-          <label class="control-label">Time Interval</label>
+        <div class="control-group flex-grow">
+          <label class="control-label">Time Slot</label>
           <div class="slot-pills-row" id="room-slot-pills">
             ${TIME_SLOTS.map(slot => `
-              <button class="slot-pill-btn ${(!isCustomTime && slot.id === selectedSlotId) ? "active" : ""}" data-slot-id="${slot.id}" type="button">
-                <span class="slot-time">${slot.startTime} - ${slot.endTime}</span>
-                <span class="slot-period">${slot.period}</span>
+              <button class="slot-pill-btn ${slot.id === selectedSlotId ? "active" : ""}" data-slot-id="${slot.id}" type="button">
+                ${slot.startTime} - ${slot.endTime}
               </button>
             `).join("")}
           </div>
         </div>
 
         <div class="control-group">
-          <label for="participant-count-input" class="control-label">Expected Participants</label>
+          <label for="participant-count-input" class="control-label">Participants</label>
           <div class="counter-input-group">
             <button type="button" class="counter-btn" id="btn-part-minus" ${participantsCount <= 1 ? "disabled" : ""}>-</button>
-            <input type="number" id="participant-count-input" class="counter-input" min="1" max="12" value="${participantsCount}">
+            <input type="number" id="participant-count-input" class="counter-input" min="1" max="10" value="${participantsCount}">
             <button type="button" class="counter-btn" id="btn-part-plus" ${participantsCount >= 10 ? "disabled" : ""}>+</button>
           </div>
         </div>
       </div>
 
-      <!-- Live Summary Bar -->
-      <div class="filter-status-banner">
+      <!-- Main Layout: Grid + Summary -->
+      <div class="facility-layout-grid">
+        <!-- Rooms Grid -->
         <div>
-          <span>Showing <strong>${availableCount} of ${rooms.length}</strong> rooms available for <strong>${formatDisplayDate(selectedDate)}</strong> from <strong>${startTime} to ${endTime}</strong> (${participantsCount} people).</span>
-        </div>
-        <div class="legend-row">
-          <span class="legend-badge"><span class="legend-dot dot-avail"></span> Available</span>
-          <span class="legend-badge"><span class="legend-dot dot-occupied"></span> Reserved for Slot</span>
-          <span class="legend-badge"><span class="legend-dot dot-amber"></span> Capacity Exceeded</span>
-        </div>
-      </div>
+          <div class="section-title-row">
+            <h2 class="subsection-title">Available Rooms (${availableCount} of ${rooms.length} match)</h2>
+            <div class="legend-row">
+              <span class="legend-badge"><span class="legend-dot dot-avail"></span> Available</span>
+              <span class="legend-badge"><span class="legend-dot dot-occupied"></span> Reserved</span>
+              <span class="legend-badge"><span class="legend-dot dot-amber"></span> Over Capacity</span>
+            </div>
+          </div>
 
-      <!-- Room Cards Grid -->
-      <div class="rooms-grid">
-        ${roomsWithStatus.map(room => {
-          let cardStatus = "status-available";
-          let badgeText = "Available";
-          let badgeClass = "pill-avail";
-          let canBook = true;
-          let disabledReason = "";
+          <div class="rooms-grid">
+            ${roomsWithStatus.map(room => {
+              let badgeText = "Available";
+              let badgeClass = "pill-avail";
+              let canBook = true;
+              let disabledReason = "";
 
-          if (!room.isAvailable) {
-            cardStatus = "status-reserved";
-            badgeText = "Reserved for Slot";
-            badgeClass = "pill-full";
-            canBook = false;
-            disabledReason = "Already booked for the chosen time interval.";
-          } else if (!room.isCapacitySufficient) {
-            cardStatus = "status-overcapacity";
-            badgeText = `Max Capacity: ${room.capacity}`;
-            badgeClass = "pill-amber";
-            canBook = false;
-            disabledReason = `Room capacity is ${room.capacity} (requested for ${participantsCount} participants).`;
-          }
+              if (!room.isAvailable) {
+                badgeText = "Reserved";
+                badgeClass = "pill-full";
+                canBook = false;
+                disabledReason = "Reserved for selected slot";
+              } else if (!room.isCapacitySufficient) {
+                badgeText = `Max ${room.capacity}`;
+                badgeClass = "pill-amber";
+                canBook = false;
+                disabledReason = `Room capacity is ${room.capacity} (requested ${participantsCount})`;
+              }
 
-          return `
-            <div class="room-card ${cardStatus}">
-              <div class="room-card-header">
-                <div>
-                  <span class="room-id-tag">${escapeHtml(room.id)}</span>
-                  <h3 class="room-name">${escapeHtml(room.name)}</h3>
-                  <div class="room-location">
-                    <svg class="meta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                    ${escapeHtml(room.location)}
+              const isSelected = room.id === selectedRoomId;
+
+              return `
+                <div class="room-card ${room.isAvailable && room.isCapacitySufficient ? "status-available" : "status-reserved"}" style="${isSelected ? "border-color: var(--color-selected); box-shadow: 0 0 0 1px var(--color-selected);" : ""}">
+                  <div class="room-card-header">
+                    <div>
+                      <h3 class="room-name">${escapeHtml(room.name)}</h3>
+                      <div class="room-location">${escapeHtml(room.location)}</div>
+                    </div>
+                    <span class="status-pill ${badgeClass}">${badgeText}</span>
+                  </div>
+
+                  <div class="capacity-text">Capacity: up to <strong>${room.capacity} people</strong></div>
+                  <p class="room-desc">${escapeHtml(room.description)}</p>
+
+                  <div class="amenity-tags">
+                    ${room.features.map(f => `<span class="amenity-tag">${escapeHtml(f)}</span>`).join("")}
+                  </div>
+
+                  <div class="room-card-footer">
+                    ${canBook ? `
+                      <button class="btn ${isSelected ? "btn-primary" : "btn-secondary"} btn-block" data-select-room-id="${room.id}">
+                        ${isSelected ? "Selected" : "Select Room"}
+                      </button>
+                    ` : `
+                      <button class="btn btn-disabled btn-block" disabled>
+                        ${disabledReason}
+                      </button>
+                    `}
                   </div>
                 </div>
-                <span class="status-pill ${badgeClass}">
-                  ${badgeText}
-                </span>
+              `;
+            }).join("")}
+          </div>
+        </div>
+
+        <!-- Compact Booking Summary Panel -->
+        <div class="booking-summary-panel">
+          <h2 class="summary-title">Booking Summary</h2>
+
+          ${selectedRoom ? `
+            <div class="summary-card">
+              <div>
+                <h3 class="summary-item-name">${escapeHtml(selectedRoom.name)}</h3>
+                <p class="summary-item-loc">${escapeHtml(selectedRoom.location)}</p>
               </div>
 
-              <div class="room-capacity-meter">
-                <div class="capacity-bar">
-                  <div class="capacity-fill" style="width: ${Math.min(100, (participantsCount / room.capacity) * 100)}%"></div>
+              <div class="summary-details-list">
+                <div class="detail-row">
+                  <span class="detail-label">Date</span>
+                  <span class="detail-val">${formatDisplayDate(selectedDate)}</span>
                 </div>
-                <span class="capacity-text">Capacity: up to <strong>${room.capacity} people</strong></span>
-              </div>
-
-              <p class="room-desc">${escapeHtml(room.description)}</p>
-
-              <div class="room-features-box">
-                <h4 class="features-title">Included Amenities & Tech</h4>
-                <div class="amenity-tags">
-                  ${room.features.map(f => `<span class="amenity-tag">${escapeHtml(f)}</span>`).join("")}
+                <div class="detail-row">
+                  <span class="detail-label">Time</span>
+                  <span class="detail-val">${activeSlot.startTime} - ${activeSlot.endTime}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Group Size</span>
+                  <span class="detail-val">${participantsCount} People (Max ${selectedRoom.capacity})</span>
                 </div>
               </div>
 
-              <div class="room-card-footer">
-                ${canBook ? `
-                  <button class="btn btn-primary btn-block" data-book-room-id="${room.id}">
-                    Reserve ${escapeHtml(room.name)}
-                  </button>
-                ` : `
-                  <button class="btn btn-disabled btn-block" disabled title="${escapeHtml(disabledReason)}">
-                    ${disabledReason}
-                  </button>
-                `}
+              <div class="summary-actions">
+                <button class="btn btn-primary btn-block" id="btn-confirm-room-booking">
+                  Confirm Reservation
+                </button>
+                <button class="btn btn-secondary-sm btn-block" id="btn-clear-room-selection">
+                  Deselect
+                </button>
               </div>
             </div>
-          `;
-        }).join("")}
-      </div>
-
-      <!-- Policy Info -->
-      <div class="facility-policy-card">
-        <h4>Discussion Room Reservation Policy</h4>
-        <p>1. Discussion rooms are reserved as ENTIRE ROOMS for group collaboration. 2. A confirmed booking prevents any overlapping reservations for the same room. 3. Cancellations instantly release the room for other student groups.</p>
+          ` : `
+            <div class="summary-empty-state">
+              <p>Select an available room to review group booking details and confirm.</p>
+            </div>
+          `}
+        </div>
       </div>
     `;
 
-    // Attach event listeners
-    // 1. Date picker
+    // Event listeners
     const dateInput = container.querySelector("#room-date-picker");
     if (dateInput) {
       dateInput.addEventListener("change", (e) => {
         selectedDate = e.target.value;
+        if (selectedRoomId && !isResourceAvailable(selectedRoomId, selectedDate, activeSlot.startTime, activeSlot.endTime)) {
+          selectedRoomId = null;
+        }
         updateView();
       });
     }
 
-    // 2. Slot pills
     container.querySelectorAll("#room-slot-pills .slot-pill-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         selectedSlotId = btn.getAttribute("data-slot-id");
-        isCustomTime = false;
+        const newSlot = TIME_SLOTS.find(s => s.id === selectedSlotId);
+        if (selectedRoomId && newSlot && !isResourceAvailable(selectedRoomId, selectedDate, newSlot.startTime, newSlot.endTime)) {
+          selectedRoomId = null;
+        }
         updateView();
       });
     });
 
-    // 3. Participant buttons
     const btnMinus = container.querySelector("#btn-part-minus");
     if (btnMinus) {
       btnMinus.addEventListener("click", () => {
         if (participantsCount > 1) {
           participantsCount--;
+          if (selectedRoom && participantsCount > selectedRoom.capacity) {
+            selectedRoomId = null;
+          }
           updateView();
         }
       });
@@ -515,8 +473,11 @@ export function renderDiscussionRoomsView(container, onRequestBookingCallback) {
     const btnPlus = container.querySelector("#btn-part-plus");
     if (btnPlus) {
       btnPlus.addEventListener("click", () => {
-        if (participantsCount < 12) {
+        if (participantsCount < 10) {
           participantsCount++;
+          if (selectedRoom && participantsCount > selectedRoom.capacity) {
+            selectedRoomId = null;
+          }
           updateView();
         }
       });
@@ -526,39 +487,55 @@ export function renderDiscussionRoomsView(container, onRequestBookingCallback) {
     if (partInput) {
       partInput.addEventListener("change", (e) => {
         const val = parseInt(e.target.value, 10);
-        if (!isNaN(val) && val >= 1 && val <= 12) {
+        if (!isNaN(val) && val >= 1 && val <= 10) {
           participantsCount = val;
+          if (selectedRoom && participantsCount > selectedRoom.capacity) {
+            selectedRoomId = null;
+          }
           updateView();
         }
       });
     }
 
-    // 4. Book room button
-    container.querySelectorAll("[data-book-room-id]").forEach(btn => {
+    container.querySelectorAll("[data-select-room-id]").forEach(btn => {
       btn.addEventListener("click", () => {
-        const roomId = btn.getAttribute("data-book-room-id");
-        const room = getResourceById(roomId);
-        if (!room) return;
+        const roomId = btn.getAttribute("data-select-room-id");
+        selectedRoomId = (selectedRoomId === roomId) ? null : roomId;
+        updateView();
+      });
+    });
 
+    const btnConfirm = container.querySelector("#btn-confirm-room-booking");
+    if (btnConfirm && selectedRoom) {
+      btnConfirm.addEventListener("click", () => {
         onRequestBookingCallback({
-          resource: room,
+          resource: selectedRoom,
           date: selectedDate,
-          startTime: startTime,
-          endTime: endTime,
+          startTime: activeSlot.startTime,
+          endTime: activeSlot.endTime,
           participants: participantsCount,
           bookingType: "discussionRoom"
         }, () => {
+          selectedRoomId = null;
           updateView();
         });
       });
-    });
+    }
+
+    const btnClear = container.querySelector("#btn-clear-room-selection");
+    if (btnClear) {
+      btnClear.addEventListener("click", () => {
+        selectedRoomId = null;
+        updateView();
+      });
+    }
   }
 
   updateView();
 }
 
 // ============================================================================
-// 3. STUDY ROOM VIEW (HONORS SILENT STUDY HALL)
+// 3. STUDY ROOM VIEW
 // ============================================================================
 
 export function renderStudyRoomView(container, onRequestBookingCallback) {
@@ -586,16 +563,14 @@ export function renderStudyRoomView(container, onRequestBookingCallback) {
 
     container.innerHTML = `
       <div class="view-header">
-        <div>
-          <h1 class="view-title">Honors Silent Study Room</h1>
-          <p class="view-subtitle">Reserve an individual quiet cubicle or study pod in our dedicated zero-noise research hall.</p>
-        </div>
+        <h1 class="view-title">Study Room</h1>
+        <p class="view-subtitle">Reserve an individual quiet study desk in the silent study hall.</p>
       </div>
 
-      <!-- Controls & Filter Bar -->
+      <!-- Date & Time Selection -->
       <div class="booking-control-bar">
         <div class="control-group">
-          <label for="study-date-picker" class="control-label">Reservation Date</label>
+          <label for="study-date-picker" class="control-label">Date</label>
           <input type="date" id="study-date-picker" class="form-input" min="${getTodayString()}" value="${selectedDate}">
         </div>
 
@@ -604,39 +579,22 @@ export function renderStudyRoomView(container, onRequestBookingCallback) {
           <div class="slot-pills-row" id="study-slot-pills">
             ${TIME_SLOTS.map(slot => `
               <button class="slot-pill-btn ${slot.id === selectedSlotId ? "active" : ""}" data-slot-id="${slot.id}" type="button">
-                <span class="slot-time">${slot.startTime} - ${slot.endTime}</span>
-                <span class="slot-period">${slot.period}</span>
+                ${slot.startTime} - ${slot.endTime}
               </button>
             `).join("")}
           </div>
         </div>
       </div>
 
-      <!-- Study Hall Header Banner -->
-      <div class="facility-info-banner study-banner">
-        <div class="banner-icon">
-          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-        </div>
-        <div class="banner-body">
-          <div class="banner-title-row">
-            <h2 class="banner-title">Honors Silent Study Hall (Ground Floor)</h2>
-            <span class="status-pill ${availableCount > 0 ? "pill-avail" : "pill-full"}">
-              ${availableCount} of ${places.length} Places Free
-            </span>
-          </div>
-          <p class="banner-desc">Equipped with acoustic sound-dampening partitions, high-speed 65W USB-C PD power charging, ergonomic mesh task chairs, and individual task lamps.</p>
-        </div>
-      </div>
-
-      <!-- Main Layout: Grid + Summary Panel -->
+      <!-- Main Layout: Grid + Summary -->
       <div class="facility-layout-grid">
-        <!-- Left: Study Pods Grid -->
+        <!-- Resource Grid -->
         <div class="study-places-container">
           <div class="section-title-row">
-            <h3 class="subsection-title">Study Places Grid (ST-01 to ST-20)</h3>
+            <h2 class="subsection-title">Study Desks (${availableCount} of ${places.length} available)</h2>
             <div class="legend-row">
               <span class="legend-badge"><span class="legend-dot dot-avail"></span> Available</span>
-              <span class="legend-badge"><span class="legend-dot dot-occupied"></span> Reserved for Slot</span>
+              <span class="legend-badge"><span class="legend-dot dot-occupied"></span> Reserved</span>
               <span class="legend-badge"><span class="legend-dot dot-selected"></span> Selected</span>
             </div>
           </div>
@@ -663,11 +621,7 @@ export function renderStudyRoomView(container, onRequestBookingCallback) {
                   aria-label="${p.name}, ${labelText}"
                 >
                   <div class="place-badge">${p.id}</div>
-                  <div class="place-icon">
-                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-                  </div>
                   <div class="place-name">${escapeHtml(p.name)}</div>
-                  <div class="place-type-tag">${escapeHtml(p.podType)}</div>
                   <div class="place-status">${labelText}</div>
                 </button>
               `;
@@ -675,39 +629,29 @@ export function renderStudyRoomView(container, onRequestBookingCallback) {
           </div>
         </div>
 
-        <!-- Right: Summary Panel -->
+        <!-- Compact Booking Summary Panel -->
         <div class="booking-summary-panel">
-          <h3 class="summary-title">Place Reservation Summary</h3>
+          <h2 class="summary-title">Booking Summary</h2>
 
           ${selectedPlace ? `
             <div class="summary-card">
-              <div class="summary-badge-row">
-                <span class="summary-chip-lab">Honors Hall</span>
-                <span class="summary-chip-id">${escapeHtml(selectedPlace.id)}</span>
+              <div>
+                <h3 class="summary-item-name">${escapeHtml(selectedPlace.name)}</h3>
+                <p class="summary-item-loc">${escapeHtml(selectedPlace.location)}</p>
               </div>
-              <h4 class="summary-item-name">${escapeHtml(selectedPlace.name)}</h4>
-              <p class="summary-item-loc">${escapeHtml(selectedPlace.location)}</p>
 
               <div class="summary-details-list">
                 <div class="detail-row">
-                  <span class="detail-label">Date:</span>
+                  <span class="detail-label">Date</span>
                   <span class="detail-val">${formatDisplayDate(selectedDate)}</span>
                 </div>
                 <div class="detail-row">
-                  <span class="detail-label">Time Slot:</span>
+                  <span class="detail-label">Time</span>
                   <span class="detail-val">${activeSlot.startTime} - ${activeSlot.endTime}</span>
                 </div>
                 <div class="detail-row">
-                  <span class="detail-label">Pod Style:</span>
-                  <span class="detail-val">${escapeHtml(selectedPlace.podType)}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="detail-label">Amenities:</span>
-                  <span class="detail-val text-sm">${selectedPlace.features.join(", ")}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="detail-label">Noise Policy:</span>
-                  <span class="detail-val text-success">Strict Silence</span>
+                  <span class="detail-label">Desk</span>
+                  <span class="detail-val">${escapeHtml(selectedPlace.id)}</span>
                 </div>
               </div>
 
@@ -715,39 +659,21 @@ export function renderStudyRoomView(container, onRequestBookingCallback) {
                 <button class="btn btn-primary btn-block" id="btn-confirm-study-booking">
                   Confirm Study Place
                 </button>
-                <button class="btn btn-outline btn-block" id="btn-clear-study-selection">
-                  Deselect Place
+                <button class="btn btn-secondary-sm btn-block" id="btn-clear-study-selection">
+                  Deselect
                 </button>
               </div>
             </div>
           ` : `
             <div class="summary-empty-state">
-              <div class="empty-icon-circle">
-                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-              </div>
-              <h4>No Study Place Selected</h4>
-              <p>Click on any available green study cubicle in the grid to review its details and complete your reservation.</p>
+              <p>Select an available study desk to review details and confirm.</p>
             </div>
           `}
-
-          <!-- Silent Study Rules -->
-          <div class="guidelines-box">
-            <h5 class="guidelines-title">
-              <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
-              Silent Hall Rules
-            </h5>
-            <ul class="guidelines-list">
-              <li>Mute all phone ringers and audio notifications.</li>
-              <li>Headphones must be used at conversational listening levels.</li>
-              <li>Covered beverage cups permitted; no open food.</li>
-            </ul>
-          </div>
         </div>
       </div>
     `;
 
-    // Attach event listeners
-    // 1. Date picker
+    // Event listeners
     const dateInput = container.querySelector("#study-date-picker");
     if (dateInput) {
       dateInput.addEventListener("change", (e) => {
@@ -759,7 +685,6 @@ export function renderStudyRoomView(container, onRequestBookingCallback) {
       });
     }
 
-    // 2. Slot pills
     container.querySelectorAll("#study-slot-pills .slot-pill-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         selectedSlotId = btn.getAttribute("data-slot-id");
@@ -771,7 +696,6 @@ export function renderStudyRoomView(container, onRequestBookingCallback) {
       });
     });
 
-    // 3. Place card clicks
     container.querySelectorAll(".study-place-card:not([disabled])").forEach(btn => {
       btn.addEventListener("click", () => {
         const placeId = btn.getAttribute("data-place-id");
@@ -780,7 +704,6 @@ export function renderStudyRoomView(container, onRequestBookingCallback) {
       });
     });
 
-    // 4. Booking action
     const btnConfirm = container.querySelector("#btn-confirm-study-booking");
     if (btnConfirm && selectedPlace) {
       btnConfirm.addEventListener("click", () => {
